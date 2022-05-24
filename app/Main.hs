@@ -7,34 +7,35 @@ import Text.Parsec.String (Parser, GenParser)
 data VariableValue = I Int | S String | B Bool deriving Show
 data Exp = SExp String [Exp] | Literal VariableValue deriving Show
 
-whitespace :: GenParser Char () String
+
+whitespace :: Parsec String () String
 whitespace = string " " <|> string "\n" <|> string "\t"
 
-stringValue :: GenParser Char () String
+stringValue :: Parsec String () String
 stringValue = many alphaNum
 
-sexpBody :: GenParser Char () [Exp]
+sexpBody :: Parsec String () [Exp]
 sexpBody = do
   option [] whitespace
   sepBy expression whitespace
 
-sexp :: GenParser Char () Exp
+sexp :: Parsec String () Exp
 sexp = do
   funcName <- stringValue
   SExp funcName <$> sexpBody
 
-int :: GenParser Char () Int
+int :: Parsec String () Int
 int = read <$> many1 digit
 
-bool :: GenParser Char () Bool
+bool :: Parsec String () Bool
 bool = True <$ string "true" <|> False <$ string "false"
 
-literal :: GenParser Char () VariableValue
+literal :: Parsec String () VariableValue
 literal = I <$> int
   <|> B <$> bool
   <|> S <$> many letter
 
-expression :: GenParser Char () Exp
+expression :: Parsec String () Exp
 expression = between (string "(") (string ")") sexp
   <|> Literal <$> literal
 
