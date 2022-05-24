@@ -5,6 +5,9 @@ import Text.Parsec.String (Parser, GenParser)
 
 data Token = TPlus | TMinus | TNum Int | TExpr Token Token Token deriving Show
 
+-- this was a sort of first go at making a parser,
+-- i totally forgot how parsec worked >:)
+
 plus :: GenParser Char () Token
 plus = TPlus <$ string "+"
 
