@@ -82,10 +82,11 @@ expression = sexp <|> literal
 
 
 reduceOrReturn :: [Either a b] -> Either a [b]
-reduceOrReturn xs = case leftValues of
-  [] -> Right $ rightValues
-  (x:xs) -> Left x
-  where (leftValues, rightValues) = partitionEithers xs
+reduceOrReturn [] = return []
+reduceOrReturn (x:xs) = do
+  val <- x
+  res <- reduceOrReturn xs
+  return (val:res)
 
 
 eval :: Exp -> Either EvalError VariableValue
