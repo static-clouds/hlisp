@@ -1,8 +1,10 @@
 module Main where
 
+import Data.Either (partitionEithers)
 import Text.Parsec
 import Text.Parsec.Char (alphaNum)
 import Text.Parsec.String (Parser, GenParser)
+import Data.List
 
 data Token = LParen
   | RParen
@@ -13,6 +15,20 @@ data VariableValue = I Int | S String | B Bool deriving Show
 type Pos = (SourcePos, SourcePos)
 data FuncName = FuncName Pos String deriving Show
 data Exp = SExp Pos FuncName [Exp] | Literal Pos VariableValue deriving Show
+
+data EvalError = EvalError Pos String | ArgumentError deriving Show
+
+data Function = Func String Int ([VariableValue] -> Either EvalError VariableValue)
+
+add :: [VariableValue] -> Either EvalError VariableValue
+add [I i1, I i2] = Right . I $ i1 + i2
+add _            = Left ArgumentError
+
+functions :: [Function]
+functions = [ Func "add" 2 add ]
+
+getFunction :: String -> Maybe Function
+getFunction funcName = find (\(Func theFuncName _ _) -> theFuncName == funcName) functions
 
 getSourcePos :: Monad m => ParsecT s u m SourcePos
 getSourcePos = fmap statePos getParserState
@@ -64,15 +80,32 @@ literal = do
 expression :: Parsec String () Exp
 expression = sexp <|> literal
 
-apply :: String -> [VariableValue] -> Maybe VariableValue
-apply "add" [I v1, I v2] = Just $ I (v1 + v2)
-apply _ _ = Nothing
 
-eval :: Exp -> VariableValue
-eval (Literal _ v) = v
-eval (SExp _ (FuncName _ funcName) args) = case apply funcName $ map eval args of
-  Nothing -> I 0
-  Just vv -> vv
+reduceOrReturn :: [Either a b] -> Either a [b]
+reduceOrReturn xs = case leftValues of
+  [] -> Right $ rightValues
+  (x:xs) -> Left x
+  where (leftValues, rightValues) = partitionEithers xs
+
+
+eval :: Exp -> Either EvalError VariableValue
+eval (Literal _ v) = Right v
+eval (SExp sexpPos (FuncName funcPos funcName) args) = do
+  -- try to get the function + arg count
+  (Func _ numFuncArgs func) <- case getFunction funcName of
+    Just function -> Right function
+    -- if fail, return evalerror
+    Nothing -> Left $ EvalError funcPos ("function named '" ++ funcName ++ "' not found")
+
+  -- check number of args
+  if length args /= numFuncArgs
+    then Left $ EvalError funcPos "function given the wrong number of arguments" else Right ()
+
+  -- evaluate the arguments
+  evaluatedArgs <- reduceOrReturn $ map eval args
+
+  -- apply the function
+  func evaluatedArgs
 
 
 loop :: IO () -> IO ()
