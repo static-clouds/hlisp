@@ -24,8 +24,12 @@ add :: [VariableValue] -> Either EvalError VariableValue
 add [I i1, I i2] = Right . I $ i1 + i2
 add _            = Left ArgumentError
 
+minus :: [VariableValue] -> Either EvalError VariableValue
+minus [I i1, I i2] = Right . I $ i1 - i2
+minus _            = Left ArgumentError
+
 functions :: [Function]
-functions = [ Func "add" 2 add ]
+functions = [ Func "add" 2 add, Func "minus" 2 minus ]
 
 getFunction :: String -> Maybe Function
 getFunction funcName = find (\(Func theFuncName _ _) -> theFuncName == funcName) functions
