@@ -88,19 +88,23 @@ reduceOrReturn (x:xs) = do
   res <- reduceOrReturn xs
   return (val:res)
 
+attempt :: Bool -> a -> Either a ()
+attempt False err = Left err
+attempt True _ = Right ()
+
+maybeToRight :: b -> Maybe a -> Either b a
+maybeToRight _ (Just x)  = Right x
+maybeToRight y Nothing   = Left y
 
 eval :: Exp -> Either EvalError VariableValue
 eval (Literal _ v) = Right v
 eval (SExp sexpPos (FuncName funcPos funcName) args) = do
   -- try to get the function + arg count
-  (Func _ numFuncArgs func) <- case getFunction funcName of
-    Just function -> Right function
-    -- if fail, return evalerror
-    Nothing -> Left $ EvalError funcPos ("function named '" ++ funcName ++ "' not found")
+  let notFoundErrorMsg = "function named '" ++ funcName ++ "' not found"
+  (Func _ numFuncArgs func) <- maybeToRight (EvalError funcPos notFoundErrorMsg) (getFunction funcName)
 
   -- check number of args
-  if length args /= numFuncArgs
-    then Left $ EvalError funcPos "function given the wrong number of arguments" else Right ()
+  attempt (length args == numFuncArgs) $ EvalError funcPos "function given the wrong number of arguments"
 
   -- evaluate the arguments
   evaluatedArgs <- reduceOrReturn $ map eval args
