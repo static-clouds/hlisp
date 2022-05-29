@@ -1,4 +1,4 @@
-# hlisp
+# hlisp
 
 A lisp interpreter, written in Haskell
 
