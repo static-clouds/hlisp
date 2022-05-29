@@ -2,13 +2,12 @@ module Parse where
 
 import Text.Parsec
 import Text.Parsec.Char (alphaNum)
-import Text.Parsec.String (Parser, GenParser)
 
 
 data VariableValue = I Int | S String | B Bool deriving Show
 type Pos = (SourcePos, SourcePos)
 data FuncName = FuncName Pos String deriving Show
-data Exp = SExp Pos FuncName [Exp] | Literal Pos VariableValue deriving Show
+data Exp a = SExp Pos FuncName [Exp a] | Literal Pos a deriving Show
 
 
 getSourcePos :: Monad m => ParsecT s u m SourcePos
@@ -19,9 +18,13 @@ whitespace :: Parsec String () String
 whitespace = string " " <|> string "\n" <|> string "\t"
 
 stringValue :: Parsec String () String
-stringValue = many alphaNum
+stringValue = do
+  string "\""
+  res <- many alphaNum
+  string "\""
+  return res
 
-sexpBody :: Parsec String () [Exp]
+sexpBody :: Parsec String () [Exp VariableValue]
 sexpBody = do
   option [] whitespace
   sepBy expression whitespace
@@ -29,11 +32,11 @@ sexpBody = do
 funcName :: Parsec String () FuncName
 funcName = do
   funcNameStartPos <- getSourcePos
-  funcNameText <- stringValue
+  funcNameText <- many alphaNum
   funcNameEndPos <- getSourcePos
   return $ FuncName (funcNameStartPos, funcNameEndPos) funcNameText
 
-sexp :: Parsec String () Exp
+sexp :: Parsec String () (Exp VariableValue)
 sexp = do
   string "("
   sexpStartPos <- getSourcePos
@@ -51,12 +54,12 @@ int = read <$> many1 digit
 bool :: Parsec String () Bool
 bool = True <$ string "true" <|> False <$ string "false"
 
-literal :: Parsec String () Exp
+literal :: Parsec String () (Exp VariableValue)
 literal = do
   startPos <- getSourcePos
   value <- I <$> int <|> B <$> bool <|> S <$> many letter
   endPos <- getSourcePos
   return $ Literal (startPos, endPos) value
 
-expression :: Parsec String () Exp
+expression :: Parsec String () (Exp VariableValue)
 expression = sexp <|> literal
