@@ -7,7 +7,8 @@ import Text.Parsec.Char (alphaNum)
 data VariableValue = I Int | S String | B Bool deriving Show
 type Pos = (SourcePos, SourcePos)
 data FuncName = FuncName Pos String deriving Show
-data Exp a = SExp Pos FuncName [Exp a] | Literal Pos a deriving Show
+
+data Exp = SExp Pos FuncName [Exp] | Literal Pos VariableValue deriving Show
 
 
 getSourcePos :: Monad m => ParsecT s u m SourcePos
@@ -24,7 +25,7 @@ stringValue = do
   string "\""
   return res
 
-sexpBody :: Parsec String () [Exp VariableValue]
+sexpBody :: Parsec String () [Exp]
 sexpBody = do
   option [] whitespace
   sepBy expression whitespace
@@ -36,7 +37,7 @@ funcName = do
   funcNameEndPos <- getSourcePos
   return $ FuncName (funcNameStartPos, funcNameEndPos) funcNameText
 
-sexp :: Parsec String () (Exp VariableValue)
+sexp :: Parsec String () Exp
 sexp = do
   string "("
   sexpStartPos <- getSourcePos
@@ -54,12 +55,12 @@ int = read <$> many1 digit
 bool :: Parsec String () Bool
 bool = True <$ string "true" <|> False <$ string "false"
 
-literal :: Parsec String () (Exp VariableValue)
+literal :: Parsec String () Exp
 literal = do
   startPos <- getSourcePos
   value <- I <$> int <|> B <$> bool <|> S <$> many letter
   endPos <- getSourcePos
   return $ Literal (startPos, endPos) value
 
-expression :: Parsec String () (Exp VariableValue)
+expression :: Parsec String () Exp
 expression = sexp <|> literal
