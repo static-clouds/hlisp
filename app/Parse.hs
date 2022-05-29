@@ -10,34 +10,36 @@ data FuncName = FuncName Pos String deriving Show
 
 data Exp = SExp Pos FuncName [Exp] | Literal Pos VariableValue deriving Show
 
+type Parser = Parsec String ()
+
 
 getSourcePos :: Monad m => ParsecT s u m SourcePos
 getSourcePos = fmap statePos getParserState
 
 
-whitespace :: Parsec String () String
+whitespace :: Parser String
 whitespace = string " " <|> string "\n" <|> string "\t"
 
-stringValue :: Parsec String () String
+stringValue :: Parser String
 stringValue = do
   string "\""
   res <- many alphaNum
   string "\""
   return res
 
-sexpBody :: Parsec String () [Exp]
+sexpBody :: Parser [Exp]
 sexpBody = do
   option [] whitespace
   sepBy expression whitespace
 
-funcName :: Parsec String () FuncName
+funcName :: Parser FuncName
 funcName = do
   funcNameStartPos <- getSourcePos
   funcNameText <- many alphaNum
   funcNameEndPos <- getSourcePos
   return $ FuncName (funcNameStartPos, funcNameEndPos) funcNameText
 
-sexp :: Parsec String () Exp
+sexp :: Parser Exp
 sexp = do
   string "("
   sexpStartPos <- getSourcePos
@@ -49,18 +51,18 @@ sexp = do
   sexpEndPos <- getSourcePos
   return $ SExp (sexpStartPos, sexpEndPos) funcNameObj sexpBodyObj
 
-int :: Parsec String () Int
+int :: Parser Int
 int = read <$> many1 digit
 
-bool :: Parsec String () Bool
+bool :: Parser Bool
 bool = True <$ string "true" <|> False <$ string "false"
 
-literal :: Parsec String () Exp
+literal :: Parser Exp
 literal = do
   startPos <- getSourcePos
   value <- I <$> int <|> B <$> bool <|> S <$> many letter
   endPos <- getSourcePos
   return $ Literal (startPos, endPos) value
 
-expression :: Parsec String () Exp
+expression :: Parser Exp
 expression = sexp <|> literal
