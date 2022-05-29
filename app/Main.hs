@@ -7,17 +7,12 @@ import Text.Parsec (parse)
 import Error (EvalError(EvalError))
 import Parse (Exp(Literal, SExp), VariableValue, FuncName(FuncName), expression)
 import StdLib (Function(Func), functions)
+import Control.Monad (forever)
 
 
 getFunction :: String -> Maybe Function
 getFunction funcName = find (\(Func theFuncName _ _) -> theFuncName == funcName) functions
 
-reduceOrReturn :: [Either a b] -> Either a [b]
-reduceOrReturn [] = return []
-reduceOrReturn (x:xs) = do
-  val <- x
-  res <- reduceOrReturn xs
-  return (val:res)
 
 attempt :: Bool -> a -> Either a ()
 attempt False err = Left err
@@ -38,20 +33,15 @@ eval (SExp sexpPos (FuncName funcPos funcName) args) = do
   attempt (length args == numFuncArgs) $ EvalError funcPos "function given the wrong number of arguments"
 
   -- evaluate the arguments
-  evaluatedArgs <- reduceOrReturn $ map eval args
+  evaluatedArgs <- mapM eval args
 
   -- apply the function
   func evaluatedArgs
 
 
-loop :: IO () -> IO ()
-loop action = do
-  action
-  loop action
-
 main :: IO ()
 main = do
-  loop $ do
+  forever $ do
     putStrLn "Enter a LISP expression:"
     input <- getLine
     case parse expression "" input of
