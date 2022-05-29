@@ -22,7 +22,7 @@ maybeToRight :: b -> Maybe a -> Either b a
 maybeToRight _ (Just x)  = Right x
 maybeToRight y Nothing   = Left y
 
-eval :: Exp VariableValue  -> Either EvalError VariableValue
+eval :: Exp -> Either EvalError VariableValue
 eval (Literal _ v) = Right v
 eval (SExp sexpPos (FuncName funcPos funcName) args) = do
   -- try to get the function + arg count
