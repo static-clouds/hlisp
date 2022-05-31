@@ -4,7 +4,7 @@ import Text.Parsec
 import Text.Parsec.Char (alphaNum)
 
 
-data VariableValue = I Int | S String | B Bool deriving Show
+data VariableValue = I Int | S String | B Bool deriving (Eq, Show)
 type Pos = (SourcePos, SourcePos)
 data FuncName = FuncName Pos String deriving Show
 
