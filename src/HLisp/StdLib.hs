@@ -1,7 +1,7 @@
-module StdLib where
+module HLisp.StdLib where
 
-import Error (EvalError(ArgumentError))
-import Parse (VariableValue(I))
+import HLisp.Error (EvalError(ArgumentError))
+import HLisp.Parse (VariableValue(I))
 -- implementations of "builtin" functions
 -- i'm not trying to adhere to any standard but eventually i would like to cover r7rs or something
 -- at the moment this stuff exists so that i have something to test

@@ -1,5 +1,5 @@
-module Error where
+module HLisp.Error where
 
-import Parse (Pos)
+import HLisp.Parse (Pos)
 
 data EvalError = EvalError Pos String | ArgumentError deriving Show

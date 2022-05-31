@@ -1,4 +1,4 @@
-module Parse where
+module HLisp.Parse where
 
 import Text.Parsec
 import Text.Parsec.Char (alphaNum)

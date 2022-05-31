@@ -3,8 +3,8 @@ module Main where
 import Control.Monad (forever)
 import Text.Parsec (parse)
 
-import Eval (eval)
-import Parse (expression)
+import HLisp.Eval (eval)
+import HLisp.Parse (expression)
 
 
 main :: IO ()

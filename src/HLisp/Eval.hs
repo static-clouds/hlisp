@@ -1,11 +1,11 @@
-module Eval where
+module HLisp.Eval where
 
 import Data.Either (partitionEithers)
 import Data.List (find)
 
-import Error (EvalError(EvalError))
-import Parse (Exp(Literal, SExp), Pos, VariableValue, FuncName(FuncName), expression)
-import StdLib (Function(Func), functions)
+import HLisp.Error (EvalError(EvalError))
+import HLisp.Parse (Exp(Literal, SExp), Pos, VariableValue, FuncName(FuncName), expression)
+import HLisp.StdLib (Function(Func), functions)
 
 
 getFunction :: String -> Maybe Function
