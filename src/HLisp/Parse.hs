@@ -9,6 +9,7 @@ type Pos = (SourcePos, SourcePos)
 data FuncName = FuncName Pos String deriving Show
 
 data Exp = SExp Pos FuncName [Exp] | Literal Pos VariableValue deriving Show
+data TopLevelExp = Directive | TopLevelExp Exp deriving Show
 
 type Parser = Parsec String ()
 
@@ -64,5 +65,15 @@ literal = do
   endPos <- getSourcePos
   return $ Literal (startPos, endPos) value
 
+directive :: Parser TopLevelExp
+directive = do
+  string "#lang racket"
+  return Directive
+
 expression :: Parser Exp
 expression = sexp <|> literal
+
+expressions :: Parser [TopLevelExp]
+expressions = sepBy topLevelExpression whitespace
+  -- ,
+  where topLevelExpression = choice [directive, TopLevelExp <$> expression]

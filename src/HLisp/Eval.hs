@@ -26,8 +26,8 @@ foldExp literal sexp tree = case tree of
   SExp sExpPos fn exps -> sexp sExpPos fn $ map (foldExp literal sexp) exps
 
 
-eval :: Exp -> Either EvalError VariableValue
-eval = foldExp literal sexp
+evalExpression :: Exp -> Either EvalError VariableValue
+evalExpression = foldExp literal sexp
   where
     literal _ vv = Right vv
     sexp sexpPos (FuncName funcPos funcName) vars = do

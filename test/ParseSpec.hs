@@ -2,7 +2,7 @@ module ParseSpec (spec) where
 
 import HLisp.Parse (literal, VariableValue(I), Exp(Literal))
 import Test.Hspec (Spec, describe, it, shouldBe)
-import Text.Parsec(parse)
+import Text.Parsec (parse)
 
 
 spec :: Spec
