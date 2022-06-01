@@ -4,7 +4,7 @@ import Control.Monad (forever)
 import Text.Parsec (parse)
 
 import HLisp.Eval (evalExpression)
-import HLisp.Parse (expression, expressions, TopLevelExp(Directive, TopLevelExp))
+import HLisp.Parse (expression, expressions, TopLevelExp(Blank, Directive, TopLevelExp))
 import System.Environment (getArgs)
 
 
@@ -21,6 +21,7 @@ main = do
     _ -> putStrLn "incorrect number of arguments"
   where
     eval' :: TopLevelExp  -> IO ()
+    eval' Blank = pure ()
     eval' Directive = pure ()
     eval' (TopLevelExp exp) = print $ evalExpression exp
 
