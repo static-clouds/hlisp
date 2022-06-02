@@ -1,6 +1,6 @@
 module HLisp.Parse where
 
-import Text.Parsec
+import Text.Parsec hiding (letter)
 import Text.Parsec.Char (alphaNum)
 
 
@@ -72,11 +72,11 @@ identifier =  do {i <- initial; body <- many subsequent; return (i:body)} <|> pe
 
 -- <initial> -> <letter> | <special initial>
 initial :: Parser Char
-initial = letter' <|> specialInitial
+initial = letter <|> specialInitial
 
 -- <letter> -> a | b | c ... | z
-letter' :: Parser Char
-letter' = oneOf "abcdefghijklmnopqrstuvwxyz"
+letter :: Parser Char
+letter = oneOf "abcdefghijklmnopqrstuvwxyz"
 
 -- <special initial> -> etc
 specialInitial :: Parser Char
@@ -132,6 +132,20 @@ character = do
 -- <character name> -> space | newline
 characterName :: Parser String
 characterName = string "space" <|> string "newline"
+
+-- <string> -> " <string element>* "
+string' :: Parser String
+string' = between (string "\"") (string "\"") (many stringElement)
+
+escapedBackSlash :: String
+escapedBackSlash = "\\\\"
+
+escapedDoubleQuote :: String
+escapedDoubleQuote = "\\\""
+
+-- <string element> -> <any char other than " or \> | \" | \\
+stringElement :: Parser String
+stringElement = string escapedBackSlash <|> string escapedDoubleQuote <|> anyCharExcept ['\]
 
 identifierExp :: Parser Exp
 identifierExp = do
