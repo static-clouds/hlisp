@@ -62,15 +62,72 @@ directive = do
   string "#lang racket"
   return Directive
 
-identifier :: Parser Exp
-identifier = do
+-- The following parser rules are adapted from r5rs
+
+-- 7.1.1. Lexical structure
+
+-- <identifier> -> <initial> <subsequent>* | <peculiar identifier>
+identifier :: Parser String
+identifier =  do {i <- initial; body <- many subsequent; return (i:body)} <|> peculiarIdentifier
+
+-- <initial> -> <letter> | <special initial>
+initial :: Parser Char
+initial = letter' <|> specialInitial
+
+-- <letter> -> a | b | c ... | z
+letter' :: Parser Char
+letter' = oneOf "abcdefghijklmnopqrstuvwxyz"
+
+-- <special initial> -> etc
+specialInitial :: Parser Char
+specialInitial = oneOf  "!$%&*/:<=>?^_~"
+
+-- <subsequent> -> <initial> | <digit> | <special subsequent>
+subsequent :: Parser Char
+subsequent = initial <|> digit <|> specialSubsequent
+
+-- <digit> -> ... (built in)
+
+-- <special subsequent> -> + | - | . | @
+specialSubsequent :: Parser Char
+specialSubsequent = oneOf "+-.@"
+
+-- <peculiar identifier> -> + | - | ...
+peculiarIdentifier :: Parser String
+peculiarIdentifier = choice $ map string ["+", "-", "..."]
+
+-- <syntactic keyword> -> <expression keyword> | else | => | etc
+syntacticKeywordStrings :: [[Char]]
+syntacticKeywordStrings = ["else", "=>", "define", "unquote", "unquote-splicing"]
+syntacticKeyword :: Parser String
+syntacticKeyword = choice $ map string (syntacticKeywordStrings ++ expressionKeywordStrings)
+
+-- <expression keyword> -> quote | lambda | if | etc
+expressionKeywordStrings :: [[Char]]
+expressionKeywordStrings = [ "quote", "lambda", "if", "set!",
+  "begin", "cond", "and", "or", "case", "let", "let*", "letrec", "do",
+  "delay", "quasiquote"]
+expressionKeyword :: Parser String
+expressionKeyword = choice $ map string expressionKeywordStrings
+
+-- <variable> -> any <identifier> that isn't also a <syntactic keyword>
+variable :: Parser String
+variable = try $ do
+  value <- identifier
+  if value `elem` (syntacticKeywordStrings ++ expressionKeywordStrings)
+    then fail "the variable value is a syntactic keyword"
+    else return value
+
+
+identifierExp :: Parser Exp
+identifierExp = do
   startPos <- getSourcePos
-  v <- string "+" <|> string "-"
+  value <- identifier
   endPos <- getSourcePos
-  return $ Identifier (Just (startPos, endPos)) v
+  return $ Identifier (Just (startPos, endPos)) value
 
 expression :: Parser Exp
-expression = identifier <|> sexp <|> literal
+expression = identifierExp <|> sexp <|> literal
 
 blank :: Parser TopLevelExp
 blank = do
