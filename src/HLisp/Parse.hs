@@ -118,6 +118,20 @@ variable = try $ do
     then fail "the variable value is a syntactic keyword"
     else return value
 
+-- <boolean> -> #t | #f
+boolean :: Parser String
+boolean = string "#t" <|> string "#f"
+
+-- <character> -> #\ <any character> | #\ <character name>
+character :: Parser String
+character = do
+  h <- string "#\\"
+  t <- characterName <|> (: []) <$> anyChar
+  return $ h ++ t
+
+-- <character name> -> space | newline
+characterName :: Parser String
+characterName = string "space" <|> string "newline"
 
 identifierExp :: Parser Exp
 identifierExp = do
