@@ -11,18 +11,23 @@ data Token = TIdentifier String
   | TCharacter String
   | TString String
   | TSymbol String
-  | TEof
-  deriving (Eq, Show)
+  deriving Eq
+
+instance Show Token where
+  show (TBoolean True) = "#t"
+  show (TBoolean False) = "#f"
+  show (TIdentifier s) = s
+  show (TNumber i) = show i
+  show (TCharacter c) = "#\\" ++ show c
+  show (TString s) = "\"" ++ s ++ "\""
+  show (TSymbol s) = s
 
 -- The following parser rules are adapted from r5rs
 
 -- 7.1.1. Lexical structure
 -- <token> -> ...
 token :: Parser Token
-token = identifier <|> boolean <|> number <|> character <|> string' <|> tsymbol -- <|> teof
-
-teof :: Parser Token
-teof = TEof <$ eof
+token = identifier <|> boolean <|> number <|> character <|> string' <|> tsymbol
 
 tsymbol :: Parser Token
 tsymbol = TSymbol <$> choice (map string ["(" , ")", "#(", "'", "`", ",", ",@", "."])
@@ -54,7 +59,12 @@ intertokenSpace = concat <$> many atmosphere
 
 -- <identifier> -> <initial> <subsequent>* | <peculiar identifier>
 identifier :: Parser Token
-identifier =  TIdentifier <$> (do {i <- initial; body <- many subsequent; return (i:body)} <|> peculiarIdentifier)
+identifier =  TIdentifier <$> (standardIdentifier <|> peculiarIdentifier)
+  where
+    standardIdentifier = do
+      i <- initial
+      body <- many subsequent
+      return (i:body)
 
 -- <initial> -> <letter> | <special initial>
 initial :: Parser Char
