@@ -18,7 +18,7 @@ instance Show Token where
   show (TBoolean False) = "#f"
   show (TIdentifier s) = s
   show (TNumber i) = show i
-  show (TCharacter c) = "#\\" ++ show c
+  show (TCharacter c) = "#\\" ++ c
   show (TString s) = "\"" ++ s ++ "\""
   show (TSymbol s) = s
 

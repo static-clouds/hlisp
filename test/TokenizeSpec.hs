@@ -4,6 +4,7 @@ import HLisp.Tokenize (tokenize, Token (TBoolean, TCharacter, TIdentifier, TNumb
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Text.Parsec (parse)
 
+import Debug.Trace (trace)
 import Test.QuickCheck
 import Control.Monad (liftM, liftM2)
 
@@ -35,7 +36,7 @@ instance Arbitrary Token where
                     , TCharacter <$> liftM2 (:) arbitraryASCIIChar (return [])
                     , TCharacter <$> oneof (map return ["space", "newline"])
                     , TString <$> fmap escape (listOf arbitraryASCIIChar)
-                    , TSymbol <$> oneof (map return ["a"])
+                    , TSymbol <$> oneof (map return ["(", ")", "#(", "'", "`", ",", ",@", "."])
                     ]
     where
       -- escape " and \ inside quoted strings
@@ -49,9 +50,14 @@ instance Arbitrary Token where
   shrink (TString s) = [TString s' | s' <- shrink s]
   shrink (TSymbol s) = []
 
+
+prop_bar :: Token -> Bool
+prop_bar tok = case parse tokenize "" (show tok) of
+  Left err -> trace (show err) False
+  Right res -> trace (show tok) trace (show res) True
+
+
 spec :: Spec
 spec = do
-  describe "parse literal" $ do
-    it "parses an identifier" $ do
-      let Right [v] = parse tokenize "" "+"
-      v `shouldBe` TIdentifier "+"
+  describe "foo" $ do
+    it "bar" $ property prop_bar
